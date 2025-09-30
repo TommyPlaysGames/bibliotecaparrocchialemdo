@@ -1,3 +1,17 @@
 {
-  "cleanUrls": true
+  "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "regex",
+          "key": "path",
+          "value": ".*[A-Z].*"
+        }
+      ],
+      "destination": "/:path*",
+      "permanent": true
+    }
+  ]
 }
