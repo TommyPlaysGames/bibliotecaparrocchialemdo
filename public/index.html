@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biblioteca Madonna dell'Olmo</title>
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <body>
+    <header>
+      <nav>
+        <div class="logo">
+          <a href="index.html">
+            <img src="images/logo.png" alt="Logo Biblioteca" />
+          </a>
+        </div>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="chi-siamo.html">Chi siamo</a></li>
+          <li><a href="storia.html">Storia</a></li>
+          <li><a href="orari.html">Orari</a></li>
+          <li><a href="contatti.html">Contatti</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <h1>Benvenuti alla Biblioteca Parrocchiale di Madonna dell'Olmo</h1>
+      <p>Scopri il nostro mondo di lettura, cultura e condivisione.</p>
+      <div style="margin-top: 2rem">
+        <iframe
+          width="100%"
+          height="400"
+          src="https://www.youtube.com/embed/ShT7NQPrrKg?si=GdweCPhR7FNJOIOz"
+          title="Video introduttivo"
+          frameborder="0"
+          allowfullscreen
+        ></iframe>
+      </div>
+      <div id="react-root"></div>
+    </main>
+    <script
+      src="https://unpkg.com/react@18/umd/react.development.js"
+      crossorigin
+    ></script>
+    <script
+      src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"
+      crossorigin
+    ></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+      const WelcomeMessage = () => {
+        return (
+          <div
+            style={{
+              marginTop: "2rem",
+              padding: "1rem",
+              backgroundColor: "#1f1f1f",
+              borderRadius: "10px",
+              textAlign: "center",
+            }}
+          >
+            <h2 style={{ color: "#90caf9" }}>📚 Benvenuto!</h2>
+            <p>
+              Scopri tutte le attività della nostra biblioteca: letture,
+              laboratori, eventi e tanto altro.
+            </p>
+          </div>
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById("react-root"));
+      root.render(<WelcomeMessage />);
+    </script>
+
+    <footer>Biblioteca Parrocchiale Madonna dell'Olmo &copy; 2025</footer>
+    <script src="js/script.js"></script>
+  </body>
+</html>

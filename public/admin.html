@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="css/style.css" />
+    <title>Admin Biblioteca</title>
+  </head>
+  <body>
+    <h1>Admin Biblioteca</h1>
+
+    <!-- Login / Logout -->
+    <div id="authDiv">
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button id="loginBtn" type="button">Login</button>
+      <button id="logoutBtn" type="button" style="display: none">Logout</button>
+    </div>
+
+    <!-- Form inserimento libri -->
+    <div id="formDiv" style="display: none">
+      <h2>Aggiungi Libro</h2>
+      <form id="libroForm">
+        <input type="text" name="titolo" placeholder="Titolo" required /><br />
+        <input type="text" name="autore" placeholder="Autore" required /><br />
+        <input
+          type="text"
+          name="casa_editrice"
+          placeholder="Casa Editrice"
+          required
+        /><br />
+        <select name="genere" required>
+          <option value="">-- Seleziona Genere --</option>
+          <option value="Narrativa">Narrativa</option>
+          <option value="Saggistica">Saggistica</option>
+          <option value="Ragazzi">Ragazzi</option>
+          <option value="Religione">Religione</option>
+          <option value="Altro">Altro</option></select
+        ><br />
+        <button type="submit">Aggiungi Libro</button>
+      </form>
+    </div>
+
+    <script type="module">
+      import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+      const SUPABASE_URL = "https://zsyjukbcdbdwinaxytwa.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzeWp1a2JjZGJkd2luYXh5dHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDE5MjgsImV4cCI6MjA3NDkxNzkyOH0.P1SFxz98FRCn4TnVRLmG_mmohkglGWQateic6G4vnxk";
+
+      const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const loginBtn = document.getElementById("loginBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+      const formDiv = document.getElementById("formDiv");
+
+      loginBtn.addEventListener("click", async () => {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          alert("Errore login: " + error.message);
+        } else {
+          alert("Login effettuato!");
+          loginBtn.style.display = "none";
+          logoutBtn.style.display = "inline";
+          formDiv.style.display = "block";
+        }
+      });
+
+      logoutBtn.addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        alert("Logout effettuato!");
+        loginBtn.style.display = "inline";
+        logoutBtn.style.display = "none";
+        formDiv.style.display = "none";
+      });
+
+      // Inserimento libri
+      document
+        .getElementById("libroForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const data = Object.fromEntries(new FormData(e.target).entries());
+
+          const res = await fetch("/api/addBook", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          const result = await res.json();
+          console.log(result);
+
+          if (res.ok) {
+            alert("Libro aggiunto!");
+            e.target.reset();
+          } else {
+            alert("Errore: " + result.error);
+          }
+        });
+    </script>
+  </body>
+</html>

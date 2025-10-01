@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biblioteca Madonna dell'Olmo</title>
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <body>
+    <header>
+      <nav>
+        <div class="logo">
+          <a href="index.html">
+            <img src="images/logo.png" alt="Logo Biblioteca" />
+          </a>
+        </div>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="chi-siamo.html">Chi siamo</a></li>
+          <li><a href="storia.html">Storia</a></li>
+          <li><a href="orari.html">Orari</a></li>
+          <li><a href="contatti.html">Contatti</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <h1>Contattaci</h1>
+      <div class="contact-container">
+        <p style="font-size: 1.2rem; margin-bottom: 0">
+          📧 Per qualsiasi informazione o richiesta, puoi contattarci via email:
+        </p>
+
+        <div class="contact-email">
+          <a
+            href="mailto:bibliotecaparrocchialemdo@gmail.com"
+            class="email-link"
+            id="emailLink"
+          >
+            bibliotecaparrocchialemdo@gmail.com
+          </a>
+
+          <br />
+
+          <button class="copy-button" onclick="copyEmail()" id="copyBtn">
+            Copia indirizzo email
+          </button>
+
+          <div class="copy-feedback" id="copyFeedback">
+            ✅ Email copiata negli appunti!
+          </div>
+        </div>
+
+        <p style="margin-top: 1.5rem; font-size: 1rem; color: #ccc">
+          💡 <strong>Suggerimento:</strong> Tocca il link per aprire la tua app
+          email preferita,<br />
+          oppure usa il pulsante "Copia" per copiare l'indirizzo negli appunti.
+        </p>
+      </div>
+    </main>
+    <footer>Biblioteca Parrocchiale Madonna dell'Olmo &copy; 2025</footer>
+
+    <script src="js/script.js"></script>
+  </body>
+</html>

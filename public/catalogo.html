@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="css/style.css" />
+    <title>Catalogo Biblioteca</title>
+  </head>
+  <body>
+    <h1>Catalogo Libri</h1>
+    <table border="1" id="tabellaLibri">
+      <tr>
+        <th>Titolo</th>
+        <th>Autore</th>
+        <th>Casa Editrice</th>
+        <th>Genere</th>
+      </tr>
+    </table>
+
+    <script type="module">
+      import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      );
+
+      async function caricaLibri() {
+        const { data: libri, error } = await supabase.from("libri").select("*");
+        if (error) {
+          console.error(error);
+          return;
+        }
+
+        const tabella = document.getElementById("tabellaLibri");
+        libri.forEach((l) => {
+          let row = `<tr>
+      <td>${l.titolo}</td>
+      <td>${l.autore}</td>
+      <td>${l.casa_editrice}</td>
+      <td>${l.genere}</td>
+    </tr>`;
+          tabella.innerHTML += row;
+        });
+      }
+
+      caricaLibri();
+    </script>
+  </body>
+</html>
