@@ -2,7 +2,7 @@
 <html lang="it">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="/css/style.css" />
     <title>Admin Biblioteca</title>
   </head>
   <body>
@@ -87,7 +87,7 @@
           e.preventDefault();
           const data = Object.fromEntries(new FormData(e.target).entries());
 
-          const res = await fetch("https://bibliotecaparrocchialemdo-n8c2in4tg-tommyplaysgames-projects.vercel.app//api/addBook", {
+          const res = await fetch("/api/addBook", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
