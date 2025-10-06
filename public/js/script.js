@@ -1,14 +1,3 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector("form");
-  if (form) {
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      alert("Grazie per il messaggio! Ti ricontatteremo presto.");
-      form.reset();
-    });
-  }
-});
-
 async function copyEmail() {
   const email = 'bibliotecaparrocchialemdo@gmail.com';
   const copyBtn = document.getElementById('copyBtn');
