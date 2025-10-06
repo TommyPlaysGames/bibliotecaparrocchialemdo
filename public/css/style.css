@@ -1,13 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Rubik&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Rubik&display=swap");
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Rubik', sans-serif;
+  font-family: "Rubik", sans-serif;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   background: #121212;
   color: #e0e0e0;
@@ -29,8 +30,14 @@ header {
 }
 
 @keyframes slideDown {
-  from { transform: translateY(-100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 nav {
@@ -83,11 +90,18 @@ main {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-h1, h2 {
+h1,
+h2 {
   color: #90caf9;
   margin-bottom: 1rem;
 }
@@ -106,7 +120,8 @@ a:hover {
   color: #ff8a65;
 }
 
-form input, form textarea {
+form input,
+form textarea {
   width: 100%;
   padding: 0.75rem;
   margin-bottom: 1rem;
@@ -119,11 +134,13 @@ form input, form textarea {
   transition: box-shadow 0.3s;
 }
 
-form input:focus, form textarea:focus {
+form input:focus,
+form textarea:focus {
   box-shadow: 0 0 5px #90caf9;
 }
 
-form input::placeholder, form textarea::placeholder {
+form input::placeholder,
+form textarea::placeholder {
   color: #aaa;
 }
 
@@ -178,7 +195,7 @@ footer {
   margin: 20px auto;
   overflow: hidden;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   background: #333;
 }
 
@@ -204,7 +221,7 @@ footer {
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
   color: white;
   padding: 20px;
   font-size: 18px;
@@ -215,7 +232,7 @@ footer {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
   border: none;
   color: white;
   font-size: 24px;
@@ -227,7 +244,7 @@ footer {
 }
 
 .carousel-btn:hover {
-  background: rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.5);
   transform: translateY(-50%) scale(1.1);
 }
 
@@ -252,14 +269,14 @@ footer {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.5);
+  background: rgba(255, 255, 255, 0.5);
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .carousel-dot:hover {
-  background: rgba(255,255,255,0.8);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .carousel-dot.active {
@@ -271,7 +288,7 @@ footer {
   position: absolute;
   top: 15px;
   right: 15px;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   color: white;
   padding: 5px 10px;
   border-radius: 15px;
@@ -416,4 +433,176 @@ footer {
 
 .pulse {
   animation: pulse 0.3s ease;
+}
+
+/* Combo box in admin */
+select {
+  background: #1f1f1f;
+  color: #e0e0e0;
+  border: 2px solid #90caf9;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  width: 100%;
+}
+
+select:hover {
+  border-color: #42a5f5;
+}
+
+select:focus {
+  outline: none;
+  box-shadow: 0 0 6px #90caf9;
+}
+
+/* Tabelle libri – versione pulita e coerente */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto; /* fallback su schermi piccoli */
+}
+
+#tabellaLibri {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto; /* <— fondamentale per non “allargare” la tabella */
+}
+
+#tabellaLibri th,
+#tabellaLibri td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: top;
+  white-space: normal; /* permetti andare a capo */
+  word-break: break-word; /* compat vecchia */
+  overflow-wrap: anywhere; /* spezza parole lunghissime */
+  border-bottom: 1px solid #333;
+}
+
+#tabellaLibri thead th {
+  background: #1f1f1f;
+  color: #90caf9;
+  border-bottom: 2px solid #90caf9;
+}
+
+#tabellaLibri tbody tr:nth-child(even) {
+  background-color: #181818;
+}
+
+/* Colonna azioni comoda (solo admin) */
+#tabellaLibri td.actions {
+  white-space: nowrap;
+  text-align: right;
+}
+#tabellaLibri td.actions .btn {
+  background: #2a2a2a;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-left: 6px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+#tabellaLibri td.actions .btn:hover {
+  background: #3a3a3a;
+  transform: translateY(-1px);
+}
+#tabellaLibri td.actions .btn.delete {
+  border-color: #e57373;
+  color: #ffcdd2;
+}
+#tabellaLibri td.actions .btn.save {
+  border-color: #90caf9;
+  color: #bbdefb;
+}
+
+/* Celle editabili (admin) */
+#tabellaLibri td[contenteditable="true"] {
+  background: #1a1a1a;
+  outline: none;
+}
+#tabellaLibri td[contenteditable="true"]:focus {
+  box-shadow: inset 0 0 0 2px #90caf9;
+  background: #121212;
+}
+
+/* ---------- Tabelle responsive per telefono ---------- */
+@media (max-width: 768px) {
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  #tabellaLibri {
+    display: block;
+    width: 100%;
+    border: none;
+  }
+
+  #tabellaLibri thead {
+    display: none; /* nasconde l'intestazione classica */
+  }
+
+  #tabellaLibri tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  #tabellaLibri tr {
+    display: grid;
+    grid-template-columns: 1fr; /* una colonna sola */
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  #tabellaLibri td {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border: none;
+  }
+
+  #tabellaLibri td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    color: #90caf9;
+    flex: 1;
+    margin-right: 10px;
+  }
+
+  /* Pulsanti azioni: più grandi e centrati */
+  #tabellaLibri td.actions {
+    justify-content: center;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  #tabellaLibri td.actions .btn {
+    padding: 8px 14px;
+    font-size: 1rem;
+  }
+}
+
+/* micro-ottimizzazione: telefoni molto piccoli (<480px) */
+@media (max-width: 480px) {
+  #tabellaLibri tr {
+    padding: 10px;
+  }
+
+  #tabellaLibri td {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  #tabellaLibri td::before {
+    margin-bottom: 3px;
+  }
+
+  #tabellaLibri td.actions {
+    flex-direction: row;
+    justify-content: center;
+  }
 }

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Consulta il catalogo online della Biblioteca Parrocchiale Madonna dell'Olmo: cerca tra centinaia di libri di narrativa, saggistica, religione e altro.">
+    <title>Biblioteca Madonna dell'Olmo</title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+
+  <script src="js/script.js"></script>
+
+  <body>
+    <header>
+      <nav>
+        <div class="logo">
+          <a href="index.html">
+            <img src="images/logo.png" alt="Logo Biblioteca" />
+          </a>
+        </div>
+        <ul>
+          <li><a href="./.">Home</a></li>
+          <li><a href="./chi-siamo.html">Chi siamo</a></li>
+          <li><a href="./storia.html">Storia</a></li>
+          <li><a href="./catalogo.html">Catalogo Libri</a></li>
+          <li><a href="./orari.html">Orari</a></li>
+          <li><a href="./contatti.html">Contatti</a></li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      <h1>Catalogo Libri</h1>
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="🔍 Cerca un libro (titolo, autore, casa editrice o genere)"
+        style="
+          width: 100%;
+          padding: 10px;
+          margin: 16px 0 8px;
+          border-radius: 6px;
+          border: none;
+          background: #1f1f1f;
+          color: #e0e0e0;
+        "
+      />
+
+      <div class="table-responsive">
+        <table id="tabellaLibri" class="catalogo-table">
+          <colgroup>
+            <col class="c-titolo" />
+            <col class="c-autore" />
+            <col class="c-editrice" />
+            <col class="c-genere" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Titolo</th>
+              <th>Autore</th>
+              <th>Casa Editrice</th>
+              <th>Genere</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Biblioteca Parrocchiale Madonna dell'Olmo</p>
+    </footer>
+
+    <script type="module">
+      import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+      const supabase = createClient(
+        "https://zsyjukbcdbdwinaxytwa.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzeWp1a2JjZGJkd2luYXh5dHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNDE5MjgsImV4cCI6MjA3NDkxNzkyOH0.P1SFxz98FRCn4TnVRLmG_mmohkglGWQateic6G4vnxk"
+      );
+
+      const input = document.getElementById("searchInput");
+      const tbody = document.querySelector("#tabellaLibri tbody");
+
+      // Normalizza testo: minuscolo, senza accenti, punteggiatura -> spazi, spazi multipli compressi
+      const normalize = (s) =>
+        (s || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "") // rimuove accenti
+          .replace(/[-–—_:/\\|;'".,!?(){}\[\]&@#*+=<>`~]/g, " ") // punteggiatura -> spazio
+          .replace(/\s+/g, " ")
+          .trim();
+
+      let allBooks = [];
+      let indexed = []; // { r: record, tokens: string[] }
+
+      function indexData(rows) {
+        indexed = rows.map((r) => {
+          const full = normalize(
+            `${r.titolo} ${r.autore} ${r.casa_editrice} ${r.genere}`
+          );
+          const tokens = full.split(" ");
+          return { r, tokens, full };
+        });
+      }
+
+      // match: ogni parola inserita deve essere prefisso di almeno un token dell'indice
+      function matches(rec, q) {
+        const qs = normalize(q);
+        if (!qs) return true;
+        const qTokens = qs.split(" ");
+        return qTokens.every((t) => rec.tokens.some((rt) => rt.startsWith(t)));
+      }
+
+      function render(rows) {
+        tbody.innerHTML = "";
+        rows.forEach((l) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+        <td>${l.titolo ?? ""}</td>
+        <td>${l.autore ?? ""}</td>
+        <td>${l.casa_editrice ?? ""}</td>
+        <td>${l.genere ?? ""}</td>
+      `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      async function load() {
+        const { data, error } = await supabase
+          .from("libri")
+          .select("id, titolo, autore, casa_editrice, genere")
+          .order("titolo")
+          .limit(2000); // sufficiente per una biblioteca media; alza se ti serve
+        if (error)
+          return alert("Errore caricamento catalogo: " + error.message);
+        allBooks = data || [];
+        indexData(allBooks);
+        render(allBooks);
+      }
+
+      // Ricerca con debounce e super tollerante (ignora virgole/hyphen/accents)
+      let t;
+      input?.addEventListener("input", () => {
+        clearTimeout(t);
+        t = setTimeout(() => {
+          const q = input.value;
+          if (!q.trim()) {
+            render(allBooks);
+            return;
+          }
+          const results = indexed
+            .filter((rec) => matches(rec, q))
+            .map((x) => x.r);
+          render(results);
+        }, 220);
+      });
+
+      load();
+    </script>
+  </body>
+</html>
