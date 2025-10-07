@@ -5,15 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Consulta il catalogo online della Biblioteca Parrocchiale Madonna dell'Olmo: cerca tra centinaia di libri di narrativa, saggistica, religione e altro."
+      content="Consulta il catalogo online della Biblioteca Parrocchiale Madonna dell'Olmo: cerca tra migliaia di libri di narrativa, saggistica, religione e altro."
     />
-    <title>Biblioteca Madonna dell'Olmo</title>
+    <title>Catalogo Libri • Biblioteca Madonna dell'Olmo</title>
     <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
     <link rel="shortcut icon" href="/favicon.ico?v=2" />
     <link rel="stylesheet" href="css/style.css" />
   </head>
-
-  <script src="js/script.js"></script>
 
   <body>
     <header>
@@ -33,12 +31,14 @@
         </ul>
       </nav>
     </header>
+
     <main>
       <h1>Catalogo Libri</h1>
+
       <input
         type="text"
         id="searchInput"
-        placeholder="🔍 Cerca un libro (titolo, autore, casa editrice o genere)"
+        placeholder="🔍 Cerca (titolo, autore, editore o genere) – ricerca completa nel database"
         style="
           width: 100%;
           padding: 10px;
@@ -68,11 +68,13 @@
           </thead>
           <tbody></tbody>
         </table>
+        <!-- sentinella per infinite scroll -->
+        <div id="sentinel" style="height: 1px"></div>
       </div>
     </main>
 
     <footer>
-      <p>&copy; 2025 Biblioteca Parrocchiale Madonna dell'Olmo</p>
+      <p>&copy; 2025 Biblioteca Parrocchiale MDO</p>
     </footer>
 
     <script type="module">
@@ -85,83 +87,116 @@
 
       const input = document.getElementById("searchInput");
       const tbody = document.querySelector("#tabellaLibri tbody");
+      const sentinel = document.getElementById("sentinel");
 
-      // Normalizza testo: minuscolo, senza accenti, punteggiatura -> spazi, spazi multipli compressi
-      const normalize = (s) =>
-        (s || "")
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "") // rimuove accenti
-          .replace(/[-–—_:/\\|;'".,!?(){}\[\]&@#*+=<>`~]/g, " ") // punteggiatura -> spazio
-          .replace(/\s+/g, " ")
-          .trim();
+      // Stato ricerca + paginazione lato server
+      let q = "";
+      let from = 0;
+      const pageSize = 50; // pubblico: batch più “leggero”
+      let loading = false;
+      let done = false;
 
-      let allBooks = [];
-      let indexed = []; // { r: record, tokens: string[] }
-
-      function indexData(rows) {
-        indexed = rows.map((r) => {
-          const full = normalize(
-            `${r.titolo} ${r.autore} ${r.casa_editrice} ${r.genere}`
+      // Costruisci query
+      const buildQuery = () => {
+        let qb = supabase
+          .from("libri")
+          .select("id, titolo, autore, casa_editrice, genere")
+          .order("titolo", { ascending: true });
+        const s = q.trim();
+        if (s) {
+          qb = qb.or(
+            `titolo.ilike.%${s}%,autore.ilike.%${s}%,casa_editrice.ilike.%${s}%,genere.ilike.%${s}%`
           );
-          const tokens = full.split(" ");
-          return { r, tokens, full };
-        });
-      }
+        }
+        return qb;
+      };
 
-      // match: ogni parola inserita deve essere prefisso di almeno un token dell'indice
-      function matches(rec, q) {
-        const qs = normalize(q);
-        if (!qs) return true;
-        const qTokens = qs.split(" ");
-        return qTokens.every((t) => rec.tokens.some((rt) => rt.startsWith(t)));
-      }
-
-      function render(rows) {
-        tbody.innerHTML = "";
+      // Render
+      function renderRows(rows) {
         rows.forEach((l) => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-        <td>${l.titolo ?? ""}</td>
-        <td>${l.autore ?? ""}</td>
-        <td>${l.casa_editrice ?? ""}</td>
-        <td>${l.genere ?? ""}</td>
-      `;
+            <td data-label="Titolo">${l.titolo ?? ""}</td>
+            <td data-label="Autore">${l.autore ?? ""}</td>
+            <td data-label="Casa Editrice">${l.casa_editrice ?? ""}</td>
+            <td data-label="Genere">${l.genere ?? ""}</td>`;
           tbody.appendChild(tr);
         });
       }
 
-      async function load() {
-        const { data, error } = await supabase
-          .from("libri")
-          .select("id, titolo, autore, casa_editrice, genere")
-          .order("titolo")
-          .limit(2000); // sufficiente per una biblioteca media; alza se ti serve
-        if (error)
-          return alert("Errore caricamento catalogo: " + error.message);
-        allBooks = data || [];
-        indexData(allBooks);
-        render(allBooks);
+      // Carica un batch
+      async function loadBatch(reset = false) {
+        if (loading || done) return;
+        loading = true;
+
+        if (reset) {
+          from = 0;
+          done = false;
+          tbody.innerHTML = "";
+        }
+
+        const qb = buildQuery();
+        const { data, error } = await qb.range(from, from + pageSize - 1);
+        loading = false;
+
+        if (error) {
+          alert("Errore caricamento catalogo: " + error.message);
+          return;
+        }
+        if (!data || data.length === 0) {
+          done = true;
+          return;
+        }
+
+        renderRows(data);
+        from += data.length;
+        if (data.length < pageSize) done = true;
       }
 
-      // Ricerca con debounce e super tollerante (ignora virgole/hyphen/accents)
-      let t;
-      input?.addEventListener("input", () => {
-        clearTimeout(t);
-        t = setTimeout(() => {
-          const q = input.value;
-          if (!q.trim()) {
-            render(allBooks);
+      // Debounce ricerca
+      const debounce = (fn, ms = 300) => {
+        let t;
+        return (...args) => {
+          clearTimeout(t);
+          t = setTimeout(() => fn(...args), ms);
+        };
+      };
+      // Ricerca con debounce e reset automatico
+      input?.addEventListener(
+        "input",
+        debounce(() => {
+          q = input.value.trim();
+
+          // Se la barra è vuota, resetta e ricarica tutto
+          if (!q) {
+            from = 0;
+            done = false;
+            tbody.innerHTML = "";
+            loadBatch(true);
             return;
           }
-          const results = indexed
-            .filter((rec) => matches(rec, q))
-            .map((x) => x.r);
-          render(results);
-        }, 220);
-      });
 
-      load();
+          // Se c’è testo, esegui la ricerca filtrata
+          from = 0;
+          done = false;
+          tbody.innerHTML = "";
+          loadBatch(true);
+        }, 300)
+      );
+
+      // Infinite scroll
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) loadBatch();
+          });
+        },
+        { root: null, rootMargin: "200px", threshold: 0 }
+      );
+      io.observe(sentinel);
+
+      // Primo caricamento
+      loadBatch(true);
     </script>
   </body>
 </html>

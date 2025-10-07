@@ -4,13 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>Biblioteca Madonna dell'Olmo</title>
+    <title>Area Amministratore • Biblioteca Madonna dell'Olmo</title>
     <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
     <link rel="shortcut icon" href="/favicon.ico?v=2" />
     <link rel="stylesheet" href="css/style.css" />
   </head>
-
-  <script src="js/script.js"></script>
 
   <body>
     <header>
@@ -30,9 +28,11 @@
         </ul>
       </nav>
     </header>
+
     <main>
       <h1>Area Amministratore</h1>
 
+      <!-- LOGIN -->
       <div id="loginDiv" class="contact-container">
         <h3>Accedi</h3>
         <input type="email" id="email" placeholder="Email" />
@@ -40,7 +40,8 @@
         <button id="loginBtn">Login</button>
       </div>
 
-      <div id="adminDiv" class="contact-container" style="display: none">
+      <!-- ADMIN -->
+      <div id="adminDiv" class="contact-container" style="display:none">
         <button id="logoutBtn" class="copy-button">Logout</button>
         <br /><br />
 
@@ -48,12 +49,7 @@
         <form id="libroForm">
           <input type="text" name="titolo" placeholder="Titolo" required />
           <input type="text" name="autore" placeholder="Autore" required />
-          <input
-            type="text"
-            name="casa_editrice"
-            placeholder="Casa Editrice"
-            required
-          />
+          <input type="text" name="casa_editrice" placeholder="Casa Editrice" required />
           <select name="genere" required>
             <option value="">-- Seleziona Genere --</option>
             <option value="Narrativa">Narrativa</option>
@@ -71,17 +67,10 @@
         <input
           type="text"
           id="searchInput"
-          placeholder="🔍 Cerca un libro (titolo, autore, casa editrice o genere)"
-          style="
-            width: 100%;
-            padding: 10px;
-            margin: 16px 0 8px;
-            border-radius: 6px;
-            border: none;
-            background: #1f1f1f;
-            color: #e0e0e0;
-          "
+          placeholder="🔍 Cerca (titolo, autore, editore o genere) – ricerca completa nel database"
+          style="width:100%;padding:10px;margin:16px 0 8px;border-radius:6px;border:none;background:#1f1f1f;color:#e0e0e0;"
         />
+
         <div class="table-responsive">
           <table id="tabellaLibri" class="admin-table">
             <colgroup>
@@ -102,12 +91,13 @@
             </thead>
             <tbody></tbody>
           </table>
+          <div id="sentinel" style="height:1px;"></div>
         </div>
       </div>
     </main>
 
     <footer>
-      <p>&copy; 2025 Biblioteca Parrocchiale Madonna dell'Olmo</p>
+      <p>&copy; 2025 Biblioteca Parrocchiale MDO</p>
     </footer>
 
     <script type="module">
@@ -123,175 +113,135 @@
       const loginBtn = document.getElementById("loginBtn");
       const logoutBtn = document.getElementById("logoutBtn");
       const libroForm = document.getElementById("libroForm");
-      const tbody = document.querySelector("#tabellaLibri tbody");
       const searchInput = document.getElementById("searchInput");
+      const tbody = document.querySelector("#tabellaLibri tbody");
+      const sentinel = document.getElementById("sentinel");
 
-      const showLogin = () => {
-        loginDiv.style.display = "block";
-        adminDiv.style.display = "none";
+      const showLogin = () => { loginDiv.style.display = "block"; adminDiv.style.display = "none"; };
+      const showAdmin = () => { loginDiv.style.display = "none"; adminDiv.style.display = "block"; };
+
+      const escapeHtml = (s) => (s ?? "").toString()
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;");
+
+      // Stato
+      let q = "";
+      let from = 0;
+      const pageSize = 100;
+      let loading = false;
+      let done = false;
+
+      const buildQuery = () => {
+        let qb = supabase.from("libri").select("*").order("titolo", { ascending: true });
+        const s = q.trim();
+        if (s) {
+          qb = qb.or(`titolo.ilike.%${s}%,autore.ilike.%${s}%,casa_editrice.ilike.%${s}%,genere.ilike.%${s}%`);
+        }
+        return qb;
       };
-      const showAdmin = () => {
-        loginDiv.style.display = "none";
-        adminDiv.style.display = "block";
-      };
 
-      const escapeHtml = (s) =>
-        (s ?? "")
-          .toString()
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;");
+      async function loadBatch(reset = false) {
+        if (loading || done) return;
+        loading = true;
 
-      let allBooks = [];
-      let indexed = [];
+        if (reset) {
+          from = 0;
+          done = false;
+          tbody.innerHTML = "";
+        }
 
-      // --- Normalizzazione per la ricerca user-friendly
-      const normalize = (s) =>
-        (s || "")
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "") // rimuove accenti
-          .replace(/[-–—_:/\\|;'".,!?(){}\[\]&@#*+=<>`~]/g, " ") // punteggiatura -> spazio
-          .replace(/\s+/g, " ")
-          .trim();
+        const { data, error } = await buildQuery().range(from, from + pageSize - 1);
+        loading = false;
 
-      function indexData(rows) {
-        indexed = rows.map((r) => {
-          const full = normalize(
-            `${r.titolo} ${r.autore} ${r.casa_editrice} ${r.genere}`
-          );
-          const tokens = full.split(" ");
-          return { r, tokens, full };
-        });
-      }
-
-      function matches(rec, q) {
-        const qs = normalize(q);
-        if (!qs) return true;
-        const qTokens = qs.split(" ");
-        return qTokens.every((t) => rec.tokens.some((rt) => rt.startsWith(t)));
-      }
-
-      // --- Rendering tabella
-      function render(rows) {
-        tbody.innerHTML = rows
-          .map(
-            (l) => `
-        <tr data-id="${l.id ?? ""}">
-          <td data-label="Titolo" contenteditable="true" data-field="titolo">${escapeHtml(
-            l.titolo
-          )}</td>
-          <td data-label="Autore" contenteditable="true" data-field="autore">${escapeHtml(
-            l.autore
-          )}</td>
-          <td data-label="Casa Editrice" contenteditable="true" data-field="casa_editrice">${escapeHtml(
-            l.casa_editrice
-          )}</td>
-          <td data-label="Genere" contenteditable="true" data-field="genere">${escapeHtml(
-            l.genere
-          )}</td>
-          <td data-label="Azioni" class="actions">
-            <button class="btn saveBtn">💾 Salva</button>
-            <button class="btn deleteBtn">🗑️ Elimina</button>
-          </td>
-        </tr>`
-          )
-          .join("");
-      }
-
-      async function caricaLibri() {
-        const { data, error } = await supabase
-          .from("libri")
-          .select("*")
-          .order("titolo");
         if (error) return alert("Errore caricamento: " + error.message);
-        allBooks = data || [];
-        indexData(allBooks);
-        render(allBooks);
+        if (!data || !data.length) { done = true; return; }
+
+        data.forEach((l) => {
+          const tr = document.createElement("tr");
+          tr.dataset.id = l.id ?? "";
+          tr.innerHTML = `
+            <td data-field="titolo" contenteditable="true">${escapeHtml(l.titolo)}</td>
+            <td data-field="autore" contenteditable="true">${escapeHtml(l.autore)}</td>
+            <td data-field="casa_editrice" contenteditable="true">${escapeHtml(l.casa_editrice)}</td>
+            <td data-field="genere" contenteditable="true">${escapeHtml(l.genere)}</td>
+            <td class="actions">
+              <button class="btn saveBtn">💾</button>
+              <button class="btn deleteBtn">🗑️</button>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+
+        from += data.length;
+        if (data.length < pageSize) done = true;
       }
 
-      // 🔍 Ricerca live con debounce
-      let timer;
-      searchInput?.addEventListener("input", () => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-          const q = searchInput.value;
-          if (!q.trim()) {
-            render(allBooks);
-            return;
-          }
-          const results = indexed
-            .filter((rec) => matches(rec, q))
-            .map((x) => x.r);
-          render(results);
-        }, 250);
-      });
+      const debounce = (fn, ms=300) => {
+        let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
+      };
 
-      // --- Delega click su tabella
+      // Ricerca con reset automatico
+      searchInput?.addEventListener("input", debounce(() => {
+        q = searchInput.value.trim();
+        from = 0;
+        done = false;
+        tbody.innerHTML = "";
+        loadBatch(true);
+      }, 300));
+
+      // Salva / Elimina
       tbody.addEventListener("click", async (e) => {
         const btn = e.target.closest("button");
         if (!btn) return;
         const tr = btn.closest("tr");
         const id = tr?.dataset?.id;
-        if (!id) return alert("ID libro mancante!");
+        if (!id) return alert("ID mancante!");
 
         if (btn.classList.contains("deleteBtn")) {
-          if (!confirm("Vuoi davvero eliminare questo libro?")) return;
+          if (!confirm("Eliminare questo libro?")) return;
           const { error } = await supabase.from("libri").delete().eq("id", id);
           if (error) return alert("Errore eliminazione: " + error.message);
-          allBooks = allBooks.filter((b) => b.id !== id);
-          indexData(allBooks);
-          render(allBooks);
+          loadBatch(true);
           return;
         }
 
         if (btn.classList.contains("saveBtn")) {
           const updated = {};
-          tr.querySelectorAll("[data-field]").forEach((td) => {
-            updated[td.dataset.field] = td.textContent.trim();
-          });
-          const { error } = await supabase
-            .from("libri")
-            .update(updated)
-            .eq("id", id);
+          tr.querySelectorAll("[data-field]").forEach((td)=>updated[td.dataset.field]=td.textContent.trim());
+          const { error } = await supabase.from("libri").update(updated).eq("id", id);
           if (error) return alert("Errore aggiornamento: " + error.message);
           alert("Libro aggiornato!");
-          const i = allBooks.findIndex((b) => b.id === id);
-          if (i >= 0) allBooks[i] = { ...allBooks[i], ...updated };
-          indexData(allBooks);
         }
       });
 
-      // --- Inserimento libro
+      // Inserimento
       libroForm?.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const nuovoLibro = Object.fromEntries(
-          new FormData(libroForm).entries()
-        );
-        const { data, error } = await supabase
-          .from("libri")
-          .insert([nuovoLibro])
-          .select();
+        const nuovo = Object.fromEntries(new FormData(libroForm).entries());
+        const { error } = await supabase.from("libri").insert([nuovo]);
         if (error) return alert("Errore inserimento: " + error.message);
-        allBooks.push(data[0]);
-        indexData(allBooks);
-        render(allBooks);
         libroForm.reset();
+        loadBatch(true);
         alert("Libro aggiunto!");
       });
 
-      // --- Login / Logout
+      // LOGIN
       loginBtn?.addEventListener("click", async () => {
         try {
           const email = document.getElementById("email").value.trim();
           const password = document.getElementById("password").value;
-          const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
+          const { error } = await supabase.auth.signInWithPassword({ email, password });
           if (error) throw error;
-          showAdmin();
-          caricaLibri();
+
+          setTimeout(async () => {
+            const { data } = await supabase.auth.getSession();
+            if (data?.session) {
+              showAdmin();
+              await loadBatch(true);
+            } else {
+              alert("Sessione non attiva, riprova.");
+            }
+          }, 500);
         } catch (err) {
           alert("Errore login: " + err.message);
         }
@@ -302,25 +252,29 @@
         showLogin();
       });
 
-      // --- Controllo sessione iniziale
+      // Sessione iniziale
       (async () => {
         const { data } = await supabase.auth.getSession();
         if (data?.session) {
           showAdmin();
-          caricaLibri();
+          loadBatch(true);
         } else {
           showLogin();
         }
       })();
 
       supabase.auth.onAuthStateChange((_e, session) => {
-        if (session) {
-          showAdmin();
-          caricaLibri();
-        } else {
-          showLogin();
-        }
+        if (session) { showAdmin(); loadBatch(true); }
+        else { showLogin(); }
       });
+
+      // Infinite scroll
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) loadBatch();
+        });
+      }, { root: null, rootMargin: "200px", threshold: 0 });
+      io.observe(sentinel);
     </script>
   </body>
 </html>
