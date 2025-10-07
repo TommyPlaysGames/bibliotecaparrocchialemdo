@@ -139,8 +139,8 @@ main {
   margin: 2rem auto;
   width: 100%;
   background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(8px) saturate(160%);
-  -webkit-backdrop-filter: blur(8px) saturate(160%);
+  backdrop-filter: blur(4px) saturate(160%);
+  -webkit-backdrop-filter: blur(4px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 14px;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
