@@ -90,19 +90,20 @@
       const tbody = document.querySelector("#tabellaLibri tbody");
       const sentinel = document.getElementById("sentinel");
 
+      // Stato ricerca + paginazione lato server
       let q = "";
       let from = 0;
-      const pageSize = 50;
+      const pageSize = 50; // pubblico: batch più “leggero”
       let loading = false;
       let done = false;
 
+      // Costruisci query
       const buildQuery = () => {
-        const s = q.trim();
         let qb = supabase
           .from("libri")
-          .select("id, titolo, autore, casa_editrice, genere", { head: false })
+          .select("id, titolo, autore, casa_editrice, genere")
           .order("titolo", { ascending: true });
-
+        const s = q.trim();
         if (s) {
           qb = qb.or(
             `titolo.ilike.%${s}%,autore.ilike.%${s}%,casa_editrice.ilike.%${s}%,genere.ilike.%${s}%`
@@ -111,18 +112,20 @@
         return qb;
       };
 
+      // Render
       function renderRows(rows) {
         rows.forEach((l) => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-        <td data-label="Titolo">${l.titolo ?? ""}</td>
-        <td data-label="Autore">${l.autore ?? ""}</td>
-        <td data-label="Casa Editrice">${l.casa_editrice ?? ""}</td>
-        <td data-label="Genere">${l.genere ?? ""}</td>`;
+            <td data-label="Titolo">${l.titolo ?? ""}</td>
+            <td data-label="Autore">${l.autore ?? ""}</td>
+            <td data-label="Casa Editrice">${l.casa_editrice ?? ""}</td>
+            <td data-label="Genere">${l.genere ?? ""}</td>`;
           tbody.appendChild(tr);
         });
       }
 
+      // Carica un batch
       async function loadBatch(reset = false) {
         if (loading || done) return;
         loading = true;
@@ -135,15 +138,12 @@
 
         const qb = buildQuery();
         const { data, error } = await qb.range(from, from + pageSize - 1);
-
         loading = false;
 
         if (error) {
-          console.error("Errore caricamento catalogo:", error.message);
-          alert("Errore caricamento catalogo. Riprova più tardi.");
+          alert("Errore caricamento catalogo: " + error.message);
           return;
         }
-
         if (!data || data.length === 0) {
           done = true;
           return;
@@ -154,6 +154,7 @@
         if (data.length < pageSize) done = true;
       }
 
+      // Debounce ricerca
       const debounce = (fn, ms = 300) => {
         let t;
         return (...args) => {
@@ -161,15 +162,30 @@
           t = setTimeout(() => fn(...args), ms);
         };
       };
-
+      // Ricerca con debounce e reset automatico
       input?.addEventListener(
         "input",
         debounce(() => {
           q = input.value.trim();
+
+          // Se la barra è vuota, resetta e ricarica tutto
+          if (!q) {
+            from = 0;
+            done = false;
+            tbody.innerHTML = "";
+            loadBatch(true);
+            return;
+          }
+
+          // Se c’è testo, esegui la ricerca filtrata
+          from = 0;
+          done = false;
+          tbody.innerHTML = "";
           loadBatch(true);
         }, 300)
       );
 
+      // Infinite scroll
       const io = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
@@ -178,9 +194,9 @@
         },
         { root: null, rootMargin: "200px", threshold: 0 }
       );
-
       io.observe(sentinel);
 
+      // Primo caricamento
       loadBatch(true);
     </script>
   </body>
