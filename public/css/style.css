@@ -38,7 +38,7 @@ body::before {
   background-size: inherit;
   background-position: inherit;
   background-repeat: inherit;
-  filter: blur(1px) brightness(0.9);
+  filter: blur(1 px) brightness(0.9);
   transform: scale(1.02); /* evita bordi tagliati */
 }
 
@@ -258,6 +258,8 @@ footer {
 
   main {
     padding: 1rem;
+    backdrop-filter: blur(1px) saturate(160%);
+    -webkit-backdrop-filter: blur(1px) saturate(160%);
   }
 
   iframe {
