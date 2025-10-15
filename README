@@ -1,0 +1,261 @@
+# 📚 Biblioteca Parrocchiale Madonna dell’Olmo
+
+Sito web ufficiale della **Biblioteca Parrocchiale Madonna dell’Olmo** (Cuneo).
+Un progetto digitale realizzato per promuovere la lettura e facilitare la consultazione del catalogo libri online.
+
+---
+
+## 🧭 Obiettivi
+
+* Consentire la **consultazione pubblica del catalogo libri**.
+* Fornire ai volontari strumenti semplici per **gestire libri e aggiornare dati**.
+* Presentare la biblioteca e la sua storia in un sito **moderno, accessibile e responsive**.
+* Migliorare la presenza online con **SEO ottimizzato e dati strutturati JSON-LD**.
+
+---
+
+## 🧩 Struttura del sito
+
+| Pagina             | Descrizione                                                 |
+| ------------------ | ----------------------------------------------------------- |
+| **index.html**     | Home page con introduzione e logo                           |
+| **chi-siamo.html** | Missione, attività e carosello fotografico della biblioteca |
+| **storia.html**    | Storia della biblioteca                                     |
+| **catalogo.html**  | Catalogo online con ricerca e caricamento infinito          |
+| **orari.html**     | Orari di apertura e informazioni pratiche                   |
+| **contatti.html**  | Modulo e informazioni di contatto                           |
+| **admin.html**     | Area riservata per amministratori (login Supabase)          |
+
+---
+
+## ⚙️ Tecnologie utilizzate
+
+* **HTML5**, **CSS3**, **JavaScript (ES6)**
+* **React** – per componenti interattivi e caroselli ottimizzati
+* **Supabase** – backend per autenticazione e database SQL
+* **Vercel** – hosting statico e API serverless
+* **Google Fonts (Rubik)** – tipografia principale
+* **JSON-LD / Open Graph** – ottimizzazione SEO
+* **Responsive design** – adattamento automatico su desktop, tablet e mobile
+
+---
+
+## 📁 Struttura delle cartelle
+
+```
+/api
+ ├── addBook.js
+ ├── listBooks.js
+ └── login.js
+
+/public
+ ├── admin.html
+ ├── apple-touch-icon.png
+ ├── catalogo.html
+ ├── chi-siamo.html
+ ├── contatti.html
+ ├── favicon.ico
+ ├── index.html
+ ├── orari.html
+ ├── storia.html
+ │
+ ├── css/
+ │    └── style.css
+ │
+ ├── js/
+ │    └── script.js
+ │
+ ├── images/
+ │    ├── body-bg.webp
+ │    ├── header-bg.webp
+ │    ├── logo.png
+ │    ├── img1.jpg
+ │    ├── img2.jpg
+ │    └── img3.jpg
+ │
+ └── 
+vercel.json
+```
+
+📸 Le immagini `img1.jpg`, `img2.jpg`, `img3.jpg` vengono usate nel **carosello della pagina “Chi siamo”**.
+
+---
+
+## 🔒 Area Amministratore
+
+L’area `admin.html` è riservata agli operatori e consente di:
+
+* Effettuare login via Supabase (email + password)
+* Inserire, modificare o eliminare libri
+* Cercare in tempo reale nel catalogo
+* Visualizzare i libri con **caricamento progressivo (infinite scroll)**
+
+### Sicurezza
+
+* **RLS (Row Level Security)** attivato su Supabase
+* Solo gli utenti autenticati possono modificare o cancellare
+* Gli utenti pubblici possono soltanto leggere i dati
+
+---
+
+## 🗂️ Importazione dei libri da Microsoft Access
+
+La biblioteca gestisce localmente il database `BIBLIOTECA.accdb`.
+La tabella principale è:
+
+```
+Titoli Libri
+├── Titolo
+├── Autore
+├── Casa Editrice
+├── Genere
+```
+
+### 🔄 Procedura di aggiornamento del catalogo online
+
+1. Apri **Microsoft Access** → tabella `Titoli Libri`
+2. Vai su:
+   **File → Salva con nome → File di testo (.txt)**
+3. Imposta:
+
+   * **Formato:** Delimitato
+   * **Delimitatore di campo:** Virgola (`,`)
+   * **Virgolette di testo:** "
+   * **Codifica:** UTF-8
+4. Salva e rinomina il file in `libri.csv`
+5. Accedi a **Supabase → Table Editor → libri**
+6. Clicca **Import data → Upload CSV**
+7. Assicurati che le colonne corrispondano:
+
+   ```
+   titolo | autore | casa_editrice | genere
+   ```
+8. Conferma l’importazione.
+
+💡 *Se compaiono caratteri “�”, apri il file in Excel e salvalo come*
+**CSV UTF-8 (delimitato da virgole)**.
+
+### 🧹 Pulizia prima di una nuova importazione
+
+Se vuoi ripartire da zero:
+
+```sql
+DELETE FROM libri;
+ALTER SEQUENCE libri_id_seq RESTART WITH 1;
+```
+
+---
+
+## 🧱 Deploy su Vercel
+
+File `vercel.json`:
+
+```json
+{
+  "version": 2,
+  "builds": [
+    { "src": "public/**/*", "use": "@vercel/static" },
+    { "src": "api/**/*.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ],
+  "cleanUrls": true
+}
+```
+
+---
+
+## 🧭 SEO e meta dati
+
+* Titoli e descrizioni ottimizzati
+* **Open Graph** per anteprime social
+* **JSON-LD (Schema.org)** per dati strutturati
+* **Favicon** e **Apple Touch Icon**
+
+Esempio JSON-LD in `<head>`:
+
+```html
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Library",
+  "name": "Biblioteca Parrocchiale Madonna dell’Olmo",
+  "url": "https://bibliotecaparrocchialemdo.it",
+  "logo": "https://bibliotecaparrocchialemdo.it/images/logo.png",
+  "description": "Biblioteca Parrocchiale Madonna dell’Olmo a Cuneo: luogo di lettura, incontro e cultura.",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Via della Battaglia 3",
+    "addressLocality": "Madonna dell’Olmo, Cuneo",
+    "addressRegion": "CN",
+    "postalCode": "12100",
+    "addressCountry": "IT"
+  }
+}
+</script>
+```
+
+---
+
+## 🎨 Design
+
+* **Sfondo del body:** foto della chiesa di Madonna dell’Olmo (`body-bg.webp`)
+* **Header:** immagine panoramica di libri (`header-bg.webp`)
+* **Colori principali:**
+
+  * Blu chiaro `#90caf9`
+  * Grigio scuro `#121212`
+  * Viola `#bb86fc`
+* Effetti visivi:
+
+  * Ombre e sfocature morbide
+  * Animazioni (`fadeIn`, `slideDown`)
+  * Leggera trasparenza per leggibilità
+
+---
+
+## 📱 Accessibilità e compatibilità
+
+* Layout flessibile per tutti i dispositivi
+* Tabelle responsive in `catalogo` e `admin`
+* Google Maps responsive con `aspect-ratio`
+* Testato su:
+
+  * Chrome
+  * Firefox
+  * Edge
+  * Safari (desktop e mobile)
+
+---
+
+## 👨‍💻 Manutenzione tecnica
+
+**Supabase:**
+
+* Dashboard: [https://supabase.com](https://supabase.com)
+* Database: `libri`
+* Table policies:
+
+  * `SELECT`: tutti gli utenti
+  * `INSERT`, `UPDATE`, `DELETE`: solo autenticati
+
+**Login admin:**
+
+* Accesso tramite `Supabase.auth.signInWithPassword()`
+* I dati restano salvati nella sessione locale
+
+**Backup consigliato:**
+
+* Esporta `libri` da Supabase in CSV una volta al mese
+* Conserva il file insieme al database Access locale
+
+---
+
+## 📖 Licenza
+
+© 2025 **Biblioteca Parrocchiale Madonna dell’Olmo**
+Tutti i diritti riservati.
+Il codice può essere riutilizzato **solo per scopi didattici o non commerciali**, previa autorizzazione.
+
+---
